@@ -142,6 +142,17 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
+
+class DuplicateNameError(Exception):
+    """ The user specified two external repos with the same name. """
+    pass
+
+
+class DuplicatePriorityError(Exception):
+    """ The user specified two external repos with the same priority. """
+    pass
+
+
 perm_cache = {}
 
 
@@ -152,6 +163,29 @@ def get_perm_id(session, name):
             (perm['name'], perm['id']) for perm in session.getAllPerms()
         ])
     return perm_cache[name]
+
+
+def validate_repos(repos):
+    """Ensure that each external repository has unique name and priority
+    values.
+
+    This prevents the user from accidentally specifying two or more external
+    repositories with the same name or priority.
+
+    :param repos: list of repository dicts
+    :raises: DuplicatePriorityError if two repos have the same priority.
+    """
+    names = set()
+    priorities = set()
+    for repo in repos:
+        name = repo['repo']
+        priority = repo['priority']
+        if name in names:
+            raise DuplicateNameError(name)
+        if priority in priorities:
+            raise DuplicatePriorityError(priority)
+        names.add(name)
+        priorities.add(priority)
 
 
 def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
@@ -212,6 +246,7 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
     :param list repos: ensure these external repos are set, and no others.
     """
     result = {'changed': False, 'stdout_lines': []}
+    validate_repos(repos)
     current_repo_list = session.getTagExternalRepos(tag_name)
     current = {repo['external_repo_name']: repo for repo in current_repo_list}
     current_priorities = {

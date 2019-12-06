@@ -5,6 +5,7 @@
   - include: basic-1.yml
   - include: external-repos-1.yml
   - include: external-repos-2.yml
+  - include: external-repos-3.yml
   - include: groups-1.yml
   - include: groups-2.yml
   - include: inheritance-1.yml
